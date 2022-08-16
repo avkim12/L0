@@ -3,7 +3,7 @@ package sub
 import (
 	"encoding/json"
 
-	"github.com/avkim12/L0/model"
+	"github.com/avkim12/L0/models"
 	"github.com/avkim12/L0/postgres"
 	"github.com/nats-io/stan.go"
 )
@@ -23,9 +23,9 @@ func Subscribe() {
 
 	defer sc.Close()
 
-	var model model.Order
+	var order models.Order
 	sub, err := sc.Subscribe(channelID, func(m *stan.Msg) {
-		err := json.Unmarshal(m.Data, &model)
+		err := json.Unmarshal(m.Data, &order)
 		if err != nil {
 			panic(err)
 		}
@@ -34,7 +34,7 @@ func Subscribe() {
 		panic(err)
 	}
 
-	postgres.CreateOrder(model)
+	postgres.CreateOrder(order)
 
 	err = sub.Unsubscribe()
 	if err != nil {

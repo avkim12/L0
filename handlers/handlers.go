@@ -2,29 +2,39 @@ package handlers
 
 import (
 	"net/http"
-	"text/template"
-
-	"github.com/avkim12/L0/model"
-	"github.com/avkim12/L0/postgres"
+	"html/template"
 )
 
-// var tmpl = template.Must(template.ParseFiles("../templates/index.html"))
+var tmpl *template.Template
 
-func GetOrderById(w http.ResponseWriter, r *http.Request) {
+func init() {
+	tmpl = template.Must(template.ParseGlob("templates/*.html"))
+}
 
-	tmpl, _ := template.ParseFiles("../templates/index.html")
-	tmpl.Execute(w, nil)
+func HomePageHandler(w http.ResponseWriter, r *http.Request) {
+	tmpl.ExecuteTemplate(w, "homePage.html", nil)
+}
 
-	db := postgres.OpenConnection()
+func GetOrderHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
 
-	row := db.QueryRow("SELECT model FROM models WHERE id = %s", r.Body)
-
-	var order model.Order
-	row.Scan(&order.Id, &order.Model)
-	// orderInfo, _ := json.Marshal(order)
+	uid := r.FormValue("orderID")
+	data := struct{
+		UID string
+	}{
+		UID: uid,
+	}
+	tmpl.ExecuteTemplate(w, "orderPage.html", data)
+	
+	// order, err := postgres.GetOrder(uid)
+	// if err != nil {
+	// 	log.Printf("No such order, err=%v \n", err)
+	// 	return
+	// }
 
 	// w.Header().Set("Content-Type", "application/json")
-	// w.Write(orderInfo)
-
-	defer db.Close()
+	// w.Write(order.Model)
 }
