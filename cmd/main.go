@@ -5,15 +5,15 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+
+	"github.com/avkim12/L0/cache"
 	"github.com/avkim12/L0/postgres"
 	_ "github.com/lib/pq"
 )
 
 type Env struct {
-	orders interface {
-		CreateOrder(postgres.Order) error
-		GetOrder(string) (postgres.Order, error)
-	}
+	cache  cache.Cache
+	orders postgres.OrderDB
 }
 
 func main() {
@@ -24,10 +24,9 @@ func main() {
 	}
 
 	env := &Env{
+		cache:  *cache.New(),
 		orders: postgres.OrderDB{DB: db},
 	}
-
-	// cache := cache.New(5*time.Minute, 10*time.Minute)
 
 	http.HandleFunc("/", env.HomePageHandler)
 	http.HandleFunc("/get-order", env.GetOrderHandler)
@@ -55,7 +54,6 @@ func (env *Env) GetOrderHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	uid := r.FormValue("orderID")
-
 	order, err := env.orders.GetOrder(uid)
 	if err != nil {
 		if err == sql.ErrNoRows {
