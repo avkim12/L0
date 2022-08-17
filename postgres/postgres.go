@@ -2,35 +2,33 @@ package postgres
 
 import (
 	"database/sql"
-
-	"github.com/avkim12/L0/models"
-	_ "github.com/lib/pq"
+	"encoding/json"
 )
 
-type PostgresDB interface {
-	Open() error
-	Close() error
-	CreateOrder(p *models.Order) error
-	GetOrder() ([]*models.Order, error)
+type Order struct {
+	UID   string          `json:"uid"`
+	Model json.RawMessage `json:"model"`
 }
 
-var db *sql.DB
+type OrderDB struct {
+	DB *sql.DB
+}
 
-func Open() error {
-
-	db, err := sql.Open("postgres", psqlInfo)
+func (db OrderDB) CreateOrder(order Order) error {
+	res, err := db.DB.Exec(insertOrderSchema, order.UID, order.Model)
 	if err != nil {
 		return err
 	}
-
-	err = db.Ping()
-	if err != nil {
-		return err
-	}
-
+	res.LastInsertId()
 	return nil
 }
 
-func Close() error {
-	return db.Close()
+func (db OrderDB) GetOrder(uid string) (Order, error) {
+	var order Order
+	row := db.DB.QueryRow(selectOrderSchema, uid)
+	err := row.Scan(&order.UID, &order.Model)
+	if err != nil {
+		return order, err
+	}
+	return order, nil
 }

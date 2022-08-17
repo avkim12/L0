@@ -1,17 +1,9 @@
 package postgres
 
-const createSchema = `
-CREATE TABLE IF NOT EXISTS posts
-(
-	id SERIAL PRIMARY KEY,
-	model JSON
-)
-`
-
 var insertOrderSchema = `
-INSERT INTO posts(id, model) VALUES($1,$2) RETURNING id
+INSERT INTO posts(uid, model) VALUES($1,$2) RETURNING uid
 `
 
 var selectOrderSchema = `
-SELECT * FROM orders WHERE id = $1
+SELECT * FROM orders WHERE uid = $1
 `
