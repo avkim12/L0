@@ -55,7 +55,7 @@ func main() {
 	}
 
 	cache.Backup(env.db, env.cache)
-	
+
 	sub.Subscribe(env.db, env.cache)
 
 	http.HandleFunc("/", env.HomePageHandler)

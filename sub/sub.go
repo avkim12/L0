@@ -23,7 +23,7 @@ func Subscribe(db *postgres.OrderDB, cache *cache.Cache) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	
+
 	_, err = sc.Subscribe(channelID, func(m *stan.Msg) {
 
 		var model models.Order

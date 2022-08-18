@@ -21,7 +21,7 @@ func New() *Cache {
 	cache := Cache{
 		items: items,
 	}
-	
+
 	return &cache
 }
 
@@ -61,7 +61,7 @@ func (c *Cache) Get(key string) (postgres.Order, bool) {
 }
 
 func (c *Cache) Delete(key string) error {
-	
+
 	c.Lock()
 	defer c.Unlock()
 

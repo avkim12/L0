@@ -31,7 +31,7 @@ func New() *OrderDB {
 }
 
 func (db *OrderDB) CreateOrder(order Order) error {
-	
+
 	fmt.Println(order)
 
 	res, err := db.DB.Exec("INSERT INTO orders (uid, model) VALUES($1,$2) RETURNING uid", order.UID, order.Model)
@@ -71,7 +71,7 @@ func (db *OrderDB) GetAll() ([]Order, error) {
 		var order Order
 		err = rows.Scan(&order.UID, &order.Model)
 		if err != nil {
-		  return orders, err
+			return orders, err
 		}
 		orders = append(orders, order)
 	}
