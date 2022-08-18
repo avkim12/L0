@@ -16,7 +16,6 @@ func Publish() {
 	if err != nil {
 		panic(err)
 	}
-
 	defer sc.Close()
 
 	sc.Publish(channelID, []byte("Hello World"))

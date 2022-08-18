@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"html/template"
 	"log"
 	"net/http"
@@ -12,30 +11,14 @@ import (
 )
 
 type Env struct {
-	cache  cache.Cache
-	orders postgres.OrderDB
-}
-
-func main() {
-
-	db, err := sql.Open("postgres", "host=localhost port=5432 user=postgres password=123 dbname=postgres sslmode=disable")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	env := &Env{
-		cache:  *cache.New(),
-		orders: postgres.OrderDB{DB: db},
-	}
-
-	http.HandleFunc("/", env.HomePageHandler)
-	http.HandleFunc("/get-order", env.GetOrderHandler)
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	db    *postgres.OrderDB
+	cache *cache.Cache
 }
 
 var templates = template.Must(template.ParseFiles("templates/homePage.html", "templates/orderPage.html"))
 
 func (env *Env) HomePageHandler(w http.ResponseWriter, r *http.Request) {
+
 	err := templates.ExecuteTemplate(w, "homePage.html", nil)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -43,6 +26,7 @@ func (env *Env) HomePageHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (env *Env) GetOrderHandler(w http.ResponseWriter, r *http.Request) {
+
 	if r.Method != "POST" {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
@@ -54,13 +38,34 @@ func (env *Env) GetOrderHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	uid := r.FormValue("orderID")
-	order, err := env.orders.GetOrder(uid)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			http.Error(w, err.Error(), http.StatusNotFound)
-		} else {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
+	order, found := env.cache.Get(uid)
+	if !found {
+		w.Write([]byte("The order ID specified does not exist"))
+	} else {
+		w.Write(order.Model)
 	}
-	w.Write(order.Model)
+}
+
+func (env *Env) Backup() {
+	orders, err := env.db.GetAll()
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, value := range orders {
+		env.cache.Set(value.UID, value.Model)
+	}
+}
+
+
+func main() {
+
+	env := &Env{
+		db:    postgres.New(),
+		cache: cache.New(),
+	}
+	env.Backup()
+	
+	http.HandleFunc("/", env.HomePageHandler)
+	http.HandleFunc("/get-order", env.GetOrderHandler)
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }

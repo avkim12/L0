@@ -1,9 +1,8 @@
 package sub
 
 import (
-	"encoding/json"
+	"fmt"
 
-	"github.com/avkim12/L0/postgres"
 	"github.com/nats-io/stan.go"
 )
 
@@ -19,21 +18,15 @@ func Subscribe() {
 	if err != nil {
 		panic(err)
 	}
-
 	defer sc.Close()
 
-	var order postgres.Order
 	sub, err := sc.Subscribe(channelID, func(m *stan.Msg) {
-		err := json.Unmarshal(m.Data, &order)
+		fmt.Printf("Received a message: %s\n", string(m.Data))
+		// err := json.Unmarshal(m.Data, &order)
 		if err != nil {
 			panic(err)
 		}
 	}, stan.StartWithLastReceived())
-	if err != nil {
-		panic(err)
-	}
-
-	// postgres.CreateOrder(order)
 
 	err = sub.Unsubscribe()
 	if err != nil {
