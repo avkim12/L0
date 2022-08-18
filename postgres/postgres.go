@@ -3,6 +3,7 @@ package postgres
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"log"
 )
 
@@ -31,7 +32,9 @@ func New() *OrderDB {
 
 func (db *OrderDB) CreateOrder(order Order) error {
 	
-	res, err := db.DB.Exec("INSERT INTO posts(uid, model) VALUES($1,$2) RETURNING uid", order.UID, order.Model)
+	fmt.Println(order)
+
+	res, err := db.DB.Exec("INSERT INTO orders (uid, model) VALUES($1,$2) RETURNING uid", order.UID, order.Model)
 	if err != nil {
 		return err
 	}

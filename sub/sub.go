@@ -23,10 +23,9 @@ func Subscribe(db *postgres.OrderDB, cache *cache.Cache) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer sc.Close()
-
+	
 	_, err = sc.Subscribe(channelID, func(m *stan.Msg) {
-		
+
 		var model models.Order
 
 		err := json.Unmarshal(m.Data, &model)
@@ -54,10 +53,8 @@ func Subscribe(db *postgres.OrderDB, cache *cache.Cache) {
 		}
 
 		cache.Set(model.OrderUID, m.Data)
-		
-	}, stan.StartWithLastReceived())
 
-	// err = sub.Unsubscribe()
+	}, stan.StartWithLastReceived())
 	if err != nil {
 		log.Fatal(err)
 	}

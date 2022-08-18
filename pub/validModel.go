@@ -1,7 +1,7 @@
 package pub
 
 var validModel = `{
-    "order_uid": "b563feb7b2b84b6valid",
+    "order_uid": "%s",
     "track_number": "WBILMVALIDTRACK",
     "entry": "WBIL",
     "delivery": {

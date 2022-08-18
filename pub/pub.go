@@ -1,25 +1,33 @@
 package pub
 
 import (
+	"fmt"
+	"log"
+
+	"github.com/google/uuid"
 	"github.com/nats-io/stan.go"
 )
 
 const (
 	clusterID = "test-cluster"
-	clientID  = "event-store"
+	clientID  = "test-client"
 	channelID = "channel"
 )
 
 func Publish() {
 
+	uid := uuid.New()
+
 	sc, err := stan.Connect(clusterID, clientID, stan.NatsURL(stan.DefaultNatsURL))
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	defer sc.Close()
 
-	err = sc.Publish(channelID, []byte(validModel))
+	msg := fmt.Sprintf(validModel, uid.String())
+
+	err = sc.Publish(channelID, []byte(msg))
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 }
