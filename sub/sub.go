@@ -1,8 +1,13 @@
 package sub
 
 import (
-	"fmt"
+	"encoding/json"
+	"log"
 
+	"github.com/avkim12/L0/cache"
+	"github.com/avkim12/L0/models"
+	"github.com/avkim12/L0/postgres"
+	"github.com/go-playground/validator/v10"
 	"github.com/nats-io/stan.go"
 )
 
@@ -12,24 +17,48 @@ const (
 	channelID = "channel"
 )
 
-func Subscribe() {
+func Subscribe(db *postgres.OrderDB, cache *cache.Cache) {
 
 	sc, err := stan.Connect(clusterID, clientID, stan.NatsURL(stan.DefaultNatsURL))
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	defer sc.Close()
 
-	sub, err := sc.Subscribe(channelID, func(m *stan.Msg) {
-		fmt.Printf("Received a message: %s\n", string(m.Data))
-		// err := json.Unmarshal(m.Data, &order)
+	_, err = sc.Subscribe(channelID, func(m *stan.Msg) {
+		
+		var model models.Order
+
+		err := json.Unmarshal(m.Data, &model)
 		if err != nil {
-			panic(err)
+			log.Fatal(err)
+			return
 		}
+
+		v := validator.New()
+		err = v.Struct(model)
+		if err != nil {
+			log.Fatal(err)
+			return
+		}
+
+		order := postgres.Order{
+			UID:   model.OrderUID,
+			Model: m.Data,
+		}
+
+		err = db.CreateOrder(order)
+		if err != nil {
+			log.Fatal(err)
+			return
+		}
+
+		cache.Set(model.OrderUID, m.Data)
+		
 	}, stan.StartWithLastReceived())
 
-	err = sub.Unsubscribe()
+	// err = sub.Unsubscribe()
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 }

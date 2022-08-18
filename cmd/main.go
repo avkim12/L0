@@ -7,6 +7,7 @@ import (
 
 	"github.com/avkim12/L0/cache"
 	"github.com/avkim12/L0/postgres"
+	"github.com/avkim12/L0/sub"
 	_ "github.com/lib/pq"
 )
 
@@ -46,25 +47,17 @@ func (env *Env) GetOrderHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (env *Env) Backup() {
-	orders, err := env.db.GetAll()
-	if err != nil {
-		log.Fatal(err)
-	}
-	for _, value := range orders {
-		env.cache.Set(value.UID, value.Model)
-	}
-}
-
-
 func main() {
 
 	env := &Env{
 		db:    postgres.New(),
 		cache: cache.New(),
 	}
-	env.Backup()
+
+	cache.Backup(env.db, env.cache)
 	
+	sub.Subscribe(env.db, env.cache)
+
 	http.HandleFunc("/", env.HomePageHandler)
 	http.HandleFunc("/get-order", env.GetOrderHandler)
 	log.Fatal(http.ListenAndServe(":8080", nil))

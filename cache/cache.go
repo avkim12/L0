@@ -3,6 +3,7 @@ package cache
 import (
 	"encoding/json"
 	"errors"
+	"log"
 	"sync"
 
 	"github.com/avkim12/L0/postgres"
@@ -14,7 +15,9 @@ type Cache struct {
 }
 
 func New() *Cache {
+
 	items := make(map[string]postgres.Order)
+
 	cache := Cache{
 		items: items,
 	}
@@ -22,7 +25,20 @@ func New() *Cache {
 	return &cache
 }
 
+func Backup(db *postgres.OrderDB, cache *Cache) {
+
+	orders, err := db.GetAll()
+	if err != nil {
+		log.Println(err)
+	}
+
+	for _, value := range orders {
+		cache.Set(value.UID, value.Model)
+	}
+}
+
 func (c *Cache) Set(key string, value json.RawMessage) {
+
 	c.Lock()
 	defer c.Unlock()
 
@@ -33,6 +49,7 @@ func (c *Cache) Set(key string, value json.RawMessage) {
 }
 
 func (c *Cache) Get(key string) (postgres.Order, bool) {
+
 	c.RLock()
 	defer c.RUnlock()
 
@@ -44,6 +61,7 @@ func (c *Cache) Get(key string) (postgres.Order, bool) {
 }
 
 func (c *Cache) Delete(key string) error {
+	
 	c.Lock()
 	defer c.Unlock()
 
